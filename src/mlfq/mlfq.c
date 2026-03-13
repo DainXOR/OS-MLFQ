@@ -17,7 +17,7 @@ int8_t mlfq_init(mlf_queue* queue){
 		}
 
 		queue->front[i] = 0;
-        queue->rear[i] = 0;
+        queue->back[i] = 0;
 	}
 
 	return 0;
@@ -32,12 +32,12 @@ int8_t mlfq_enqueueAt(mlf_queue* queue, PCB* pcb, int level)
     if (level < 0 || level >= LEVELS)
         return -1;
 
-    if (queue->rear[level] >= MAX_PROCESSES)
+    if (queue->back[level] >= MAX_PROCESSES)
         return -2;
 
     printf("Enqueue process %d\n", pcb->pid);
-    queue->queue[level][queue->rear[level]] = pcb;
-    queue->rear[level]++;
+    queue->queue[level][queue->back[level]] = pcb;
+    queue->back[level]++;
 
     return 0;
 }
@@ -46,7 +46,7 @@ PCB* mlfq_dequeueAt(mlf_queue* queue, int level)
     if (level < 0 || level >= LEVELS)
         return NULL;
 
-    if (queue->front[level] == queue->rear[level])
+    if (queue->front[level] == queue->back[level])
         return NULL;
 
     PCB* pcb = queue->queue[level][queue->front[level]];

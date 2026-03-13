@@ -22,7 +22,7 @@ void scheduler_priorityBoost(void* params[]){
 
 void scheduler_loop(void* params[]) {
 	printf("Starting scheduler...\n");
-	mlf_queue* mlfq = (mlf_queue*)params[0];
+	mlf_queue* mlfq = params[0];
 	mlfq_init(mlfq);
 	uint64_t priorityBoostCicles = 0;
 
@@ -38,6 +38,7 @@ void scheduler_loop(void* params[]) {
 
         for (int i = 0; i < LEVELS; i++) {
         	printf("Is %d queue empty? %d\n", i, mlfq_isLevelEmpty(mlfq, i));
+         	printf("Front: %d | Back: %d\n", mlfq->front[i], mlfq->back[i]);
             if (mlfq_isLevelEmpty(mlfq, i) == RETURN_FALSE) {
                 p = mlfq_dequeueAt(mlfq, i);
                 level = i;

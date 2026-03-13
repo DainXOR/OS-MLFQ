@@ -12,7 +12,7 @@
 typedef struct {
     PCB* queue[LEVELS][MAX_PROCESSES];
     int front[LEVELS];
-    int rear[LEVELS];
+    int back[LEVELS];
 } mlf_queue;
 
 //int quantum[LEVELS] = {2, 4, 8};

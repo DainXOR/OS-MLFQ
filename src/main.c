@@ -14,7 +14,10 @@ int main(void){
 	printf("Enqueue result: %d\n", mlfq_enqueueAt(&mlfq, pcb_createRandom(), 0));
 	printf("Enqueue result: %d\n", mlfq_enqueueAt(&mlfq, pcb_createRandom(), 0));
 
-	scheduler_loop((void*)&mlfq);
+	void* args[1] = {&mlfq};
+	printf("Test: %d\n", mlfq.back[0]);
+
+	scheduler_loop(args);
 
 	return 0;
 }

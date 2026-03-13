@@ -1,0 +1,48 @@
+[
+  {
+    "file": "src/mlfq/mlfq.c",
+    "arguments": [
+      "gcc",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Werror",
+      "-Wshadow",
+      "-Wconversion",
+      "-Wnull-dereference",
+      "-std=c11",
+      "-Iinclude",
+      "-MMD",
+      "-MP",
+      "-c",
+      "src/mlfq/mlfq.c",
+      "-o",
+      "build/mlfq/mlfq.o"
+    ],
+    "directory": "/dev/data_kingston_nvme/dev/c/os/mlfq/OS-MLFQ",
+    "output": "build/mlfq/mlfq.o"
+  },
+  {
+    "file": "src/mlfq/pcb.c",
+    "arguments": [
+      "gcc",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Werror",
+      "-Wshadow",
+      "-Wconversion",
+      "-Wnull-dereference",
+      "-std=c11",
+      "-Iinclude",
+      "-MMD",
+      "-MP",
+      "-c",
+      "src/mlfq/pcb.c",
+      "-o",
+      "build/mlfq/pcb.o"
+    ],
+    "directory": "/dev/data_kingston_nvme/dev/c/os/mlfq/OS-MLFQ",
+    "output": "build/mlfq/pcb.o"
+  }
+]

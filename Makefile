@@ -36,7 +36,7 @@ clean:
 
 re: clean all
 
-debug: CFLAGS += -g -O0
+debug: CFLAGS += -g -fno-omit-frame-pointer -O0
 debug: re
 
 valgrind: debug

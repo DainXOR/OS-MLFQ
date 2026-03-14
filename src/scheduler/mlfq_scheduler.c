@@ -11,6 +11,27 @@ enum {
 	PRIORITY_BOOST_CYCLES = 20
 };
 
+#include <stdio.h>
+
+void scheduler_initResultsFile(void) {
+    FILE *f = fopen("assets/results.csv", "r");
+
+    /* If file exists, just close and return */
+    if (f) {
+        fclose(f);
+        return;
+    }
+
+    /* File does not exist → create it and write header */
+    f = fopen("assets/results.csv", "w");
+    if (!f) {
+        perror("Could not create assets/results.csv");
+        return;
+    }
+
+    fprintf(f, "PID,Arrival,Burst,Start,Finish,Response,Turnaround,Waiting\n");
+    fclose(f);
+}
 void scheduler_writeResult(PCB* p){
     FILE *f = fopen("assets/results.csv", "a");
     if (!f) {
@@ -55,10 +76,12 @@ void scheduler_priorityBoost(mlf_queue* mlfq){
 
 void scheduler_loop(void* params[]) {
 	printf("Starting scheduler...\n");
+	scheduler_initResultsFile();
 	mlf_queue* mlfq = (mlf_queue*)params[0];
 	uint64_t totalCycles = 0;
 	uint64_t priorityBoostCycles = 0;
 	return_code mustWait = RETURN_FALSE;
+	printf("Scheduler begin run\n");
 
     while (1) {
         PCB *p = NULL;

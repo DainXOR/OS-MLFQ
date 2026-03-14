@@ -9,10 +9,21 @@ int main(void){
 	mlf_queue mlfq;
 	mlfq_init(&mlfq);
 
-	mlfq_enqueueAt(&mlfq, pcb_createRandomAt(0), 0);
-	mlfq_enqueueAt(&mlfq, pcb_createRandomAt(3), 0);
-	mlfq_enqueueAt(&mlfq, pcb_createRandomAt(20), 0);
-	mlfq_enqueueAt(&mlfq, pcb_createRandomAt(26), 0);
+	PCB* tmp = pcb_createRandomAt(0);
+	tmp->burstTime = 8;
+	mlfq_enqueueAt(&mlfq, tmp, 0);
+
+	tmp = pcb_createRandomAt(1);
+	tmp->burstTime = 4;
+	mlfq_enqueueAt(&mlfq, tmp, 0);
+
+	tmp = pcb_createRandomAt(2);
+	tmp->burstTime = 9;
+	mlfq_enqueueAt(&mlfq, tmp, 0);
+
+	tmp = pcb_createRandomAt(3);
+	tmp->burstTime = 5;
+	mlfq_enqueueAt(&mlfq, tmp, 0);
 
 	void* args[1] = { &mlfq };
 	scheduler_loop(args);

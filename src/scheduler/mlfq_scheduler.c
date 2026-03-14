@@ -160,6 +160,7 @@ void scheduler_loop(void* params[]) {
             	break;
             }
 
+            usedSlices++;
             --(p->remainingTime);
             if (!p->remainingTime){
            		printf("Finished process %lu\n", p->pid);
@@ -168,13 +169,13 @@ void scheduler_loop(void* params[]) {
 
             if (p->state == PCB_STATE_TERMINATED){
             	p->finishTime = (int64_t)totalCycles;
-           		usedSlices++;
                 break;
             }
         }
 
         if (p->state != PCB_STATE_TERMINATED) {
-            int8_t next = level < LEVELS-1 && usedSlices == slices ? level + 1 : level;
+            int8_t next = level < LEVELS-1 && usedSlices >= slices ? level + 1 : level;
+            printf("Used slices %d vs max slices %d----------------------------\n", usedSlices, slices);
 
             printf("Moving process %lu priority from %d to %d\n", p->pid, p->priority, next);
             p->priority = next;

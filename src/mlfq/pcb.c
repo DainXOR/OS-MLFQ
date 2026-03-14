@@ -58,6 +58,13 @@ PCB* pcb_createRandom(void)
     return pcb;
 }
 
+PCB* pcb_createRandomAt(int64_t arrivalTime){
+	PCB* tmp = pcb_createRandom();
+	tmp->arrivalTime = arrivalTime;
+
+	return tmp;
+}
+
 return_code pcb_executeInstruction(PCB* pcb){
 	++(pcb->pc);
 	int64_t instruction = *(pcb->program + pcb->pc);

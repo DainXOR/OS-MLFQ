@@ -7,7 +7,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define PRIORITY_BOOST_CYCLES 20
+enum {
+	PRIORITY_BOOST_CYCLES = 20
+};
+
+void scheduler_writeResult(PCB* p){
+    FILE *f = fopen("assets/results.csv", "a");
+    if (!f) {
+        perror("Could not open results.csv");
+        return;
+    }
+    uint64_t pid = p->pid;
+    int64_t arrival = p->arrivalTime;
+    int64_t burst = p->burstTime;
+    int64_t start = p->startTime;
+    int64_t finish = p->finishTime;
+    int64_t response = p->firstResponseTime;
+
+    int64_t turnaround = finish - arrival;
+    int64_t waiting = turnaround - burst;
+
+    fprintf(
+        f,
+        "%lu,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
+        pid,
+        arrival,
+        burst,
+        start,
+        finish,
+        response,
+        turnaround,
+        waiting
+    );
+
+    fclose(f);
+}
 
 void scheduler_priorityBoost(mlf_queue* mlfq){
 	for (int i = 1; i < LEVELS; i++) {
@@ -24,10 +58,12 @@ void scheduler_loop(void* params[]) {
 	mlf_queue* mlfq = (mlf_queue*)params[0];
 	uint64_t totalCycles = 0;
 	uint64_t priorityBoostCycles = 0;
+	return_code mustWait = RETURN_FALSE;
 
     while (1) {
         PCB *p = NULL;
         int8_t level = -1;
+        mustWait = RETURN_FALSE;
 
         if (priorityBoostCycles >= PRIORITY_BOOST_CYCLES){
         	printf("Priority boost\n");
@@ -43,9 +79,18 @@ void scheduler_loop(void* params[]) {
                 p = mlfq_dequeueAt(mlfq, i);
 
                 if (p->state != PCB_STATE_READY){
-                	printf("Process %lu is not ready, skipping", p->pid);
+                	printf("Process %lu is not ready, skipping\n", p->pid);
                		mlfq_enqueueAt(mlfq, p, i);
+                 	p = NULL;
                 	continue;
+                }
+                else if ((uint64_t)p->arrivalTime > totalCycles){
+                	printf("Process %lu has not yet arrived, skipping\n", p->pid);
+                 	printf("Cycles to arrive: %lu\n", (uint64_t)p->arrivalTime - totalCycles);
+                 	mlfq_enqueueAt(mlfq, p, i);
+                  	mustWait = RETURN_TRUE;
+                   	p = NULL;
+                  	continue;
                 }
                 else {
 	                printf("Executing process: %lu\n", p->pid);
@@ -55,14 +100,24 @@ void scheduler_loop(void* params[]) {
             }
         }
 
-        if (!p) break;
+        if (!p && mustWait == RETURN_FALSE) break;
+        else if (!p && mustWait == RETURN_TRUE) { // Wait for the other processes to arrive, no priority boost since is noop
+        	totalCycles++;
+         	printf("%lu cycle\n", totalCycles);
+         	continue;
+        }
 
         p->state = PCB_STATE_RUNNING;
         int slices = quantum(level);
+        int usedSlices = 0;
         printf("Time slice size: %d\n", slices);
 
         for (int i = 0; i < slices; i++) {
+        	totalCycles++;
+	        priorityBoostCycles++;
+	        printf("%lu cycle\n", totalCycles);
         	printf("Executing time slice: %d\n", i);
+
 
         	if (p->startTime == -1) {
 				p->startTime = (int)totalCycles;
@@ -70,8 +125,9 @@ void scheduler_loop(void* params[]) {
 			}
 
             if (pcb_executeInstruction(p) == RETURN_ERROR){
-           		printf("Process %lu blocked", p->pid);
+           		printf("Process %lu blocked\n", p->pid);
             	p->state = PCB_STATE_BLOCKED;
+            	usedSlices++;
             	break;
             }
 
@@ -81,26 +137,29 @@ void scheduler_loop(void* params[]) {
                 p->state = PCB_STATE_TERMINATED;
             }
 
-            if (p->state == PCB_STATE_TERMINATED)
+            if (p->state == PCB_STATE_TERMINATED){
+            	p->finishTime = (int64_t)totalCycles;
+           		usedSlices++;
                 break;
+            }
         }
 
         if (p->state != PCB_STATE_TERMINATED) {
-            int8_t next = level < LEVELS-1 ? level + 1 : level;
+            int8_t next = level < LEVELS-1 && usedSlices == slices ? level + 1 : level;
 
-            printf("Reducing process %lu priority from %d to %d\n", p->pid, p->priority, next);
+            printf("Moving process %lu priority from %d to %d\n", p->pid, p->priority, next);
             p->priority = next;
 
             mlfq_enqueueAt(mlfq, p, next);
             p->state = PCB_STATE_READY;
         } else {
         	printf("Deleting process %lu since it is terminated\n", p->pid);
+         	printf("Generating metrics\n");
+         	scheduler_writeResult(p);
+          	printf("Metrics stored for process %lu\n", p->pid);
        		free(p);
+        	printf("Process deleted\n");
         }
-
-        ++totalCycles;
-        ++priorityBoostCycles;
-        printf("%lu cycle\n", totalCycles);
     }
 
     printf("All processes terminated, destroying scheduler...\n");

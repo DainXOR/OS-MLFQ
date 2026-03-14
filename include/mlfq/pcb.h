@@ -44,6 +44,7 @@ typedef struct {
 
 PCB* pcb_create(uint64_t pid, int64_t arrival_time, int64_t burst_time, int64_t *program, int64_t program_size);
 PCB* pcb_createRandom(void);
+PCB* pcb_createRandomAt(int64_t arrivalTime);
 return_code pcb_executeInstruction(PCB* pcb);
 
 #endif

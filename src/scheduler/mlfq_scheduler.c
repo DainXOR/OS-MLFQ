@@ -13,7 +13,13 @@ enum {
 
 #include <stdio.h>
 
+#include <sys/stat.h>
+
+void scheduler_prepareAssets(void){
+    mkdir("assets", 0777);
+}
 void scheduler_initResultsFile(void) {
+	scheduler_prepareAssets();
     FILE *f = fopen("assets/results.csv", "r");
 
     /* If file exists, just close and return */

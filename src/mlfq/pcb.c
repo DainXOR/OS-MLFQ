@@ -1,24 +1,26 @@
 #include "mlfq/pcb.h"
+#include "utils/return_options.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <memory.h>
 
-PCB* pcb_create(int pid, int arrival_time, int burst_time, int *program, int program_size)
+PCB* pcb_create(uint64_t pid, int64_t arrival_time, int64_t burst_time, int64_t *program, int64_t program_size)
 {
     PCB* pcb = (PCB*)malloc(sizeof(PCB));
     if (!pcb)
         return NULL;
 
     pcb->pid = pid;
-    pcb->state = READY;
+    pcb->state = PCB_STATE_READY;
 
-    pcb->arrival_time = arrival_time;
-    pcb->burst_time = burst_time;
-    pcb->remaining_time = burst_time;
+    pcb->arrivalTime = arrival_time;
+    pcb->burstTime = burst_time;
+    pcb->remainingTime = burst_time;
 
-    pcb->start_time = -1;
-    pcb->finish_time = -1;
-    pcb->first_response_time = -1;
+    pcb->startTime = -1;
+    pcb->finishTime = -1;
+    pcb->firstResponseTime = -1;
 
     pcb->priority = 0;   // start at highest queue
     pcb->pc = 0;
@@ -28,39 +30,38 @@ PCB* pcb_create(int pid, int arrival_time, int burst_time, int *program, int pro
     memset(pcb->stack, 0, sizeof(pcb->stack));
     memset(pcb->vars, 0, sizeof(pcb->vars));
 
-    pcb->program_size = program_size;
+    pcb->programSize = program_size;
     pcb->program = program;
 
     return pcb;
 }
 
-#define MIN_BURST 2
-#define MAX_BURST 12
-#define MAX_PROGRAM_SIZE 32
 
 PCB* pcb_createRandom(void)
 {
-	static int pid = 1;
-    int arrival_time = rand() % 10;  // arrivals between 0–9
-    int burst_time = (rand() % (MAX_BURST - MIN_BURST + 1)) + MIN_BURST;
+	static uint64_t pid = 1;
+    int64_t arrivalTime = rand() % 10;  // arrivals between 0–9
+    int64_t burstTime = (rand() % (PCB_CONFIG_MAX_BURST - PCB_CONFIG_MIN_BURST + 1)) + PCB_CONFIG_MIN_BURST;
 
-    int program_size = (rand() % MAX_PROGRAM_SIZE) + 1;
+    int64_t programSize = (rand() % PCB_CONFIG_MAX_PROGRAM_SIZE) + 1;
 
-    int *program = malloc(sizeof(int) * (unsigned long)program_size);
+    int64_t *program = malloc(sizeof(int64_t) * (unsigned long)programSize);
     if (!program)
         return NULL;
 
-    for (int i = 0; i < program_size; i++) {
-        program[i] = rand() % 10; // dummy instruction
+    for (int i = 0; i < programSize; i++) {
+        program[i] = rand(); // dummy instruction
     }
 
-    PCB* pcb = pcb_create(pid, arrival_time, burst_time, program, program_size);
+    PCB* pcb = pcb_create(pid, arrivalTime, burstTime, program, programSize);
     ++pid;
     return pcb;
 }
 
-int pcb_executeInstruction(PCB* pcb){
-	(void) pcb;
+return_code pcb_executeInstruction(PCB* pcb){
+	++(pcb->pc);
+	int64_t instruction = *(pcb->program + pcb->pc);
+	(void) instruction;
 
-	return 0;
+	return RETURN_NORMAL;
 }

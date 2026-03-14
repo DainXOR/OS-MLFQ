@@ -5,14 +5,13 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define PRIORITY_BOOST_CYCLES 20
 
-void scheduler_priorityBoost(void* params[]){
-	mlf_queue* mlfq = (mlf_queue*)params[0];
-
+void scheduler_priorityBoost(mlf_queue* mlfq){
 	for (int i = 1; i < LEVELS; i++) {
-        while (!mlfq_isLevelEmpty(mlfq, i)) {
+        while (mlfq_isLevelEmpty(mlfq, i) == RETURN_FALSE) {
             PCB *p = mlfq_dequeueAt(mlfq, i);
             p->priority = 0;
             mlfq_enqueueAt(mlfq, p, 0);
@@ -22,59 +21,88 @@ void scheduler_priorityBoost(void* params[]){
 
 void scheduler_loop(void* params[]) {
 	printf("Starting scheduler...\n");
-	mlf_queue* mlfq = params[0];
-	mlfq_init(mlfq);
-	uint64_t priorityBoostCicles = 0;
+	mlf_queue* mlfq = (mlf_queue*)params[0];
+	uint64_t totalCycles = 0;
+	uint64_t priorityBoostCycles = 0;
 
     while (1) {
         PCB *p = NULL;
-        int level = -1;
+        int8_t level = -1;
 
-        if (priorityBoostCicles >= PRIORITY_BOOST_CYCLES){
-        	scheduler_priorityBoost((void *)mlfq);
+        if (priorityBoostCycles >= PRIORITY_BOOST_CYCLES){
         	printf("Priority boost\n");
-         	priorityBoostCicles = 0;
+        	scheduler_priorityBoost(mlfq);
+         	printf("Priority boost finish\n");
+         	priorityBoostCycles = 0;
         }
 
-        for (int i = 0; i < LEVELS; i++) {
+        for (int8_t i = 0; i < LEVELS; i++) {
         	printf("Is %d queue empty? %d\n", i, mlfq_isLevelEmpty(mlfq, i));
          	printf("Front: %d | Back: %d\n", mlfq->front[i], mlfq->back[i]);
             if (mlfq_isLevelEmpty(mlfq, i) == RETURN_FALSE) {
                 p = mlfq_dequeueAt(mlfq, i);
-                level = i;
-                printf("Executing process: %d\n", p->pid);
-                break;
+
+                if (p->state != PCB_STATE_READY){
+                	printf("Process %lu is not ready, skipping", p->pid);
+               		mlfq_enqueueAt(mlfq, p, i);
+                	continue;
+                }
+                else {
+	                printf("Executing process: %lu\n", p->pid);
+	               	level = i;
+	                break;
+                }
             }
         }
 
         if (!p) break;
 
-        p->state = RUNNING;
-        int slice = quantum(level);
+        p->state = PCB_STATE_RUNNING;
+        int slices = quantum(level);
+        printf("Time slice size: %d\n", slices);
 
-        for (int i = 0; i < slice; i++) {
-
+        for (int i = 0; i < slices; i++) {
         	printf("Executing time slice: %d\n", i);
-            if (pcb_executeInstruction(p))
-                break;
 
-            if (p->state == TERMINATED)
+        	if (p->startTime == -1) {
+				p->startTime = (int)totalCycles;
+				p->firstResponseTime = p->startTime - p->arrivalTime;
+			}
+
+            if (pcb_executeInstruction(p) == RETURN_ERROR){
+           		printf("Process %lu blocked", p->pid);
+            	p->state = PCB_STATE_BLOCKED;
+            	break;
+            }
+
+            --(p->remainingTime);
+            if (!p->remainingTime){
+           		printf("Finished process %lu\n", p->pid);
+                p->state = PCB_STATE_TERMINATED;
+            }
+
+            if (p->state == PCB_STATE_TERMINATED)
                 break;
         }
 
-        if (p->state != TERMINATED) {
-            int next = level < LEVELS-1 ? level + 1 : level;
+        if (p->state != PCB_STATE_TERMINATED) {
+            int8_t next = level < LEVELS-1 ? level + 1 : level;
 
-            printf("Reducing process %d priority from %d to %d\n", p->pid, p->priority, next);
+            printf("Reducing process %lu priority from %d to %d\n", p->pid, p->priority, next);
             p->priority = next;
 
             mlfq_enqueueAt(mlfq, p, next);
-            p->state = READY;
+            p->state = PCB_STATE_READY;
+        } else {
+        	printf("Deleting process %lu since it is terminated\n", p->pid);
+       		free(p);
         }
 
-        ++priorityBoostCicles;
+        ++totalCycles;
+        ++priorityBoostCycles;
+        printf("%lu cycle\n", totalCycles);
     }
 
-    printf("Destroying scheduler...\n");
+    printf("All processes terminated, destroying scheduler...\n");
     mlfq_destroy(mlfq);
 }

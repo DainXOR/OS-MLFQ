@@ -6,7 +6,8 @@
 typedef enum {
 	RETURN_TRUE,
 	RETURN_FALSE,
-	RETURN_ERROR
+	RETURN_ERROR,
+	RETURN_NORMAL
 } return_code;
 
 

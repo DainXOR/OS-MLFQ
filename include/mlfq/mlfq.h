@@ -20,7 +20,7 @@ typedef struct {
 int quantum(int level);
 
 int8_t mlfq_init(mlf_queue* queue);
-int8_t mlfq_destroy(mlf_queue* queue);
+void mlfq_destroyContents(mlf_queue* queue);
 
 int8_t mlfq_enqueueAt(mlf_queue* queue, PCB* pcb, int level);
 PCB* mlfq_dequeueAt(mlf_queue* queue, int level);

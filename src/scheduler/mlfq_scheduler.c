@@ -175,7 +175,7 @@ void scheduler_loop(void* params[]) {
 
         if (p->state != PCB_STATE_TERMINATED) {
             int8_t next = level < LEVELS-1 && usedSlices >= slices ? level + 1 : level;
-            printf("Used slices %d vs max slices %d----------------------------\n", usedSlices, slices);
+            printf("Used slices %d vs max slices %d\n", usedSlices, slices);
 
             printf("Moving process %lu priority from %d to %d\n", p->pid, p->priority, next);
             p->priority = next;
@@ -193,5 +193,5 @@ void scheduler_loop(void* params[]) {
     }
 
     printf("All processes terminated, destroying scheduler...\n");
-    mlfq_destroy(mlfq);
+    mlfq_destroyContents(mlfq);
 }

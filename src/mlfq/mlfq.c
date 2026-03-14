@@ -22,9 +22,19 @@ int8_t mlfq_init(mlf_queue* queue){
 
 	return 0;
 }
-int8_t mlfq_destroy(mlf_queue* queue){
-	(void) queue;
-	return 0;
+void mlfq_destroyContents(mlf_queue* queue){
+	if (!queue) return;
+
+    for (int level = 0; level < LEVELS; level++) {
+
+        while (mlfq_isLevelEmpty(queue, level) == RETURN_FALSE) {
+            PCB* p = mlfq_dequeueAt(queue, level);
+
+            if (p != NULL) {
+                free(p);
+            }
+        }
+    }
 }
 
 int8_t mlfq_enqueueAt(mlf_queue* queue, PCB* pcb, int level)

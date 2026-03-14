@@ -54,14 +54,19 @@ PCB* pcb_createRandom(void)
     }
 
     PCB* pcb = pcb_create(pid, arrivalTime, burstTime, program, programSize);
+    if (!pcb)
+        return NULL;
+
     ++pid;
     return pcb;
 }
 
 PCB* pcb_createRandomAt(int64_t arrivalTime){
 	PCB* tmp = pcb_createRandom();
-	tmp->arrivalTime = arrivalTime;
+	if (!tmp)
+        return NULL;
 
+	tmp->arrivalTime = arrivalTime;
 	return tmp;
 }
 
